@@ -2,6 +2,7 @@
 import datetime
 import os
 import time
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import psutil
@@ -190,6 +191,15 @@ def thermald_thread():
   no_panda_cnt = 0
 
   thermal_config = HARDWARE.get_thermal_config()
+
+  # CPR3 logging
+  base_path = "/sys/kernel/debug/cpr3-regulator/"
+  cpr_files = [p for p in Path(base_path).glob("**/*") if p.is_file()]
+  cpr_data = {}
+  for f in cpr_files:
+    with open(f, "r") as f:
+      cpr_data[f] = f.read()
+  cloudlog.event("Startup blocked", cpr=cpr_data)
 
   while 1:
     pandaState = messaging.recv_sock(pandaState_sock, wait=True)
